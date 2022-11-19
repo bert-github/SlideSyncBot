@@ -235,7 +235,7 @@ sub whois
 sub join_channel
 {
   my ($self, $channel, $key) = @_;
-  $self->log("Trying to join '$channel'\n");
+  $self->log("Trying to join $channel\n");
   $poe_kernel->post($self->{IRCNAME}, 'join', $self->charset_encode($channel),
 		    $self->charset_encode($key // ''));
 }
@@ -245,7 +245,7 @@ sub join_channel
 sub part_channel
 {
   my ($self, $channel) = @_;
-  $self->log("Trying to part '$channel'\n");
+  $self->log("Trying to part $channel\n");
   $poe_kernel->post($self->{IRCNAME}, 'part', $self->charset_encode($channel));
 }
 
