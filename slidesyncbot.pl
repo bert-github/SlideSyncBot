@@ -229,7 +229,7 @@ sub said($$)
       if $text =~ /^ *slideset *: *(.+)$/i;
 
   return $self->request_slide_sync($info, $1)
-      if $text =~ /^ *\[ *slide *([0-9]+|\+\+|[$^-]) *\] *$/i;
+      if $text =~ /^ *\[ *slide *([0-9]+|\+\+?|[$^-]) *\] *$/i;
 
   # We don't handle other text unless it is addressed to us.
   return $self->SUPER::said($info)
