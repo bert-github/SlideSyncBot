@@ -62,6 +62,7 @@ sub init($)
   $self->{status} = {};		# Last GET results for each channel
   $self->{syncserver} = {};	# Per-channel sync server URLs
   $errmsg = $self->read_rejoin_list() and die "$errmsg\n";
+  $self->log("Connecting...");
   return 1;
 }
 
@@ -92,6 +93,7 @@ sub invited($$)
 
   $self->log("Invited by $who ($raw_nick) to $channel");
   $self->join_channel($channel);
+  return;
 }
 
 
@@ -227,7 +229,7 @@ sub said($$)
       if $text =~ /^ *slideset *: *(.+)$/i;
 
   return $self->request_slide_sync($info, $1)
-      if $text =~ /^ *\[ *slide *([0-9]+) *\] *$/i;
+      if $text =~ /^ *\[ *slide *([0-9]+|\+\+|[$^-]) *\] *$/i;
 
   # We don't handle other text unless it is addressed to us.
   return $self->SUPER::said($info)
@@ -284,6 +286,7 @@ sub chanjoin($$)
     $self->{status}->{$channel} = undef;
     $self->remember_channel($channel);
   }
+  return;
 }
 
 
