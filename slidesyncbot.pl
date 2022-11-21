@@ -175,6 +175,11 @@ sub request_slide_sync($$$)
   my $code;
 
   return if $channel eq "msg";
+
+  # %-escape most characters except some part of ASCII.
+  $slide = join("",
+    map(0x30 <= $_ && $_ <= 0x7E ? chr($_) : sprintf("%%%02x", $_),
+      unpack("C*", Encode::encode("UTF-8", $slide))));
   $url = "$self->{syncserver}->{$channel}/$id?page=$slide";
   $self->log("Requesting $url");
 
@@ -229,7 +234,7 @@ sub said($$)
       if $text =~ /^ *slideset *: *(.+)$/i;
 
   return $self->request_slide_sync($info, $1)
-      if $text =~ /^ *\[ *slide *([0-9]+|\+\+?|[\$^-]) *\] *$/i;
+      if $text =~ /^ *\[ *slide *(.+?) *\] *$/i;
 
   # We don't handle other text unless it is addressed to us.
   return $self->SUPER::said($info)
@@ -268,8 +273,18 @@ sub said($$)
 sub help($$)
 {
   my ($self, $info) = @_;
+  my $channel = $info->{channel}; # "#channel" or "msg"
 
-  return "[todo]";
+  return "I'm an instance of SlideSyncBot.\n" .
+      "When I see something like \"[Slide X]\", " .
+      "I send a message to a server ($self->{syncserver}->{$channel}).\n" .
+      "All browsers that are connected to that server " .
+      "and waiting for messages from this channel will then show slide X.\n" .
+      "X is a number or one of the symbols \"+\", \"++\" \"-\", \"^\"" .
+      "or \"\$\".\n" .
+      "You can invite me with \"/invite " . $self->nick() . "\" " .
+      "and dismiss me with \"" . $self->nick() . ", bye\"\n" .
+      "For more details, see " . MANUAL;
 }
 
 
@@ -451,7 +466,7 @@ Which means if its URL is C<https://example.org/sse>, then web clients
 can subscribe to a "channel" called C<myevents> by requesting the URL
 C<https://example.org/sse/myevents>. And slidesyncbot can send
 synchronization messages to that channel my requesting a URL like
-C<https://example.org/sse/myevents?page=3>.
+C<https://example.org/sse/myevents?message=11>.
 
 On IRC, slidesyncbot is usually known by the nickname "syslibot"
 (unless changed by the B<-n> option when slidesyncbot was started).
@@ -469,24 +484,45 @@ This command asks slidesyncbot to join the current channel.
 The I<slide-URL> is assumed to point to a slide set that has support
 for remote synchronization. In particular, if the query
 B<?sync=>I<sync-URL> is added after the URL, the slide set is expected
-to connect to that URL to get synchronization messages. (Typically,
-this means that the slide set uses JavaScript with code that calls
-HTML5's EventSource functions.) One slide framework that has support
-for synchronization like this is b6+.
+to connect to that URL to get synchronization messages. E.g., if the
+slide set is at https://example.org/myslides.html and slidesyncbot is
+using https://example.com/sse as synchronization server, then the URL
+
+=over
+
+https://example.org/myslides.html?sync=https://example.com/sse
+
+=back
+
+when opened in a browser, should cause the browser to display the
+slide set and connect to the synchronization server for events.
+(Typically, this means that the slide set uses JavaScript with code
+that calls HTML5's EventSource functions.) One slide framework that
+has support for synchronization like this is b6+.
 
 Slidesyncbot responds on IRC with the slideset URL with the query
-appended (i.e., I<slide-URL>?sync=I<sync-URL>). Users who want to
-follow the slide presentation must themselves copy this URL to their
-browser. In some IRC clients, clicking on the URL also works.
+appended. Users who want to follow the slide presentation must
+themselves copy this URL to their browser. In some IRC clients,
+clicking on the URL also works.
 
-=item B<[slide >I<N>B<]>
+Note that C<slideset> used the same syntax that scribe.perl uses to
+embed slides in meeting minutes.
 
-I<N> must be a number. Whenever it sees a line like this, slidesyncbot
-sends a message to the synchronization server. The synchronization
-server in turn will send messages to all connected browsers and ask
-them to display slide number I<N>. The square brackets are part of the
-command and are required. Spaces are allowed around and inside the
-brackets.
+=item B<[slide> I<N>B<]>
+
+I<N> can be a slide number or any other token that the slide framework
+understands. (B6+ understands +, ++, -, ^ and $, meaning,
+respectively, the next incremental item or slide, the next slide, the
+previous slide, the first slide and the last slide). Whenever it sees
+a line like this, slidesyncbot sends a message to the synchronization
+server. The synchronization server in turn will send messages to all
+connected browsers and ask them to display the slide corresponding to
+I<N>. The square brackets are part of the command and are required.
+Spaces are allowed around and inside the brackets.
+
+Note that this syntax is the same as that used by scribe.perl to embed
+slides in meeting minutes, except that scribe.perl only acts on slide
+numbers and ignores any other tokens.
 
 =item B<syslibot, use> I<sync-URL>
 
