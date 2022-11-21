@@ -48,8 +48,8 @@ use Term::ReadKey;		# To read a password without echoing
 use utf8;
 use open ':encoding(UTF-8)';	# Open all files assuming they are UTF-8
 
-use constant HOME => '[not-yet-defined]';
-use constant MANUAL => '[not-yet-defined';
+use constant HOME => 'https://github.com/bert-github/SlideSyncBot';
+use constant MANUAL => '[TBD]';
 use constant VERSION => '0.1';
 
 
