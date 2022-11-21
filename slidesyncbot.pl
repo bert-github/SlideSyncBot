@@ -280,7 +280,7 @@ sub help($$)
       "I send a message to a server ($self->{syncserver}->{$channel}).\n" .
       "All browsers that are connected to that server " .
       "and waiting for messages from this channel will then show slide X.\n" .
-      "X is a number or one of the symbols \"+\", \"++\" \"-\", \"^\"" .
+      "X is a number or one of the symbols \"+\", \"++\" \"-\", \"^\" " .
       "or \"\$\".\n" .
       "You can invite me with \"/invite " . $self->nick() . "\" " .
       "and dismiss me with \"" . $self->nick() . ", bye\"\n" .
