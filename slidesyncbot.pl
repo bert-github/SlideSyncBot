@@ -211,7 +211,8 @@ sub handle_status_command($$)
   my $channel = $info->{channel};	# "#channel" or "msg"
   my $status;
 
-  $status = "the sync server is " . $self->{syncserver}->{$channel};
+  $status = "I'm running on " . (`hostname -f` =~ s/\n$//r) .
+      ", the sync server is " . $self->{syncserver}->{$channel};
   if ($self->{status}->{$channel}) {
       $status .= " and its last response was: " .
 	  status_message($self->{status}->{$channel});
@@ -276,14 +277,12 @@ sub help($$)
   my $channel = $info->{channel}; # "#channel" or "msg"
 
   return "I'm an instance of SlideSyncBot.\n" .
-      "When I see something like \"[Slide X]\", " .
-      "I send a message to a server ($self->{syncserver}->{$channel}).\n" .
-      "All browsers that are connected to that server " .
-      "and waiting for messages from this channel will then show slide X.\n" .
-      "X is a number or one of the symbols \"+\", \"++\" \"-\", \"^\" " .
-      "or \"\$\".\n" .
+      "I watch this channel for \"slideset:...\" and \"[slide ...]\".\n" .
+      "And then I send messages to a server, so that all browsers " .
+      "that are connected there will show the right slide.\n" .
       "You can invite me with \"/invite " . $self->nick() . "\" " .
       "and dismiss me with \"" . $self->nick() . ", bye\"\n" .
+      "Also try \"" . $self->nick() . ", status\"\n" .
       "For more details, see " . MANUAL;
 }
 
