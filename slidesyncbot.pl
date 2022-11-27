@@ -365,7 +365,7 @@ sub read_netrc($;$)
 
 # Main body
 
-my (%opts, $ssl, $user, $password, $host, $port, $channel);
+my (%opts, $ssl, $proto, $user, $password, $host, $port, $channel);
 
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 getopts('C:kn:N:r:v', \%opts) or die "Try --help\n";
@@ -373,15 +373,15 @@ getopts('C:kn:N:r:v', \%opts) or die "Try --help\n";
 # The arguments must be an IRC-URL and the URL of a sync server.
 #
 die "Usage: $0 [options] [--help] IRC-URL sync-URL\n" if $#ARGV != 1;
-($ssl, $user, $password, $host, $port, $channel) =
-    $ARGV[0] =~ m/^(ircs?):\/\/(?:([^:]+):([^@]+)?@)?([^:\/#?]+)(?::([^\/]*))?(?:\/(.+)?)?$/i or
-    die "First argument must be a URI starting with `irc:' or `ircs:'\n";
-$ssl = $ssl eq 'ircs';
+($proto, $user, $password, $host, $port, $channel) = $ARGV[0] =~
+    /^(ircs?):\/\/(?:([^:]+)(?::([^@]*))?@)?([^:\/#?]+)(?::([^\/]*))?(?:\/(.+)?)?$/i
+    or die "First argument must be a URI starting with `irc:' or `ircs:'\n";
+$ssl = $proto =~ /^ircs$/i;
 $user =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg if defined $user;
 $password =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg if defined $password;
 $port //= $ssl ? 6697 : 6667;
 $channel =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg if defined $channel;
-$channel = "#$channel" if defined $channel && $channel !~ /^[#&]/;
+$channel = '#' . $channel if defined $channel && $channel !~ /^[#&]/;
 # TODO: Do something with other parameters, such as a key
 
 # If there was no username, try to find one in ~/.netrc
@@ -403,6 +403,7 @@ if (defined $user && !defined $password) {
   $password = ReadLine(0);
   ReadMode('restore');
   print "\n";
+  chomp $password;
 }
 
 my $bot = SlideSyncBot->new(
@@ -416,9 +417,9 @@ my $bot = SlideSyncBot->new(
   name => $opts{'N'} // 'SlideSyncBot '.VERSION.' '.HOME,
   channels => (defined $channel ? [$channel] : []),
   rejoinfile => $opts{'r'},
-  verbose => defined $opts{'v'},
   default_syncserver => $ARGV[1],
-  ssl_verify_hostname => $opts{'k'} ? 0 : 1);
+  ssl_verify_hostname => $opts{'k'} ? 0 : 1,
+  verbose => defined $opts{'v'});
 
 $bot->run();
 
