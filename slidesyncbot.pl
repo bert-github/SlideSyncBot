@@ -47,6 +47,7 @@ use Encode qw(encode decode);
 use Term::ReadKey;		# To read a password without echoing
 use utf8;
 use open ':encoding(UTF-8)';	# Open all files assuming they are UTF-8
+use Net::Netrc;
 
 use constant HOME => 'https://github.com/bert-github/SlideSyncBot';
 use constant MANUAL => '[TBD]';
@@ -351,6 +352,17 @@ sub read_rejoin_list($)
 }
 
 
+# read_netrc -- find login & password for a host and (optional) login in .netrc
+sub read_netrc($;$)
+{
+  my ($host, $login) = @_;
+
+  my $machine = Net::Netrc->lookup($host, $login);
+  return ($machine->login, $machine->password) if defined $machine;
+  return (undef, undef);
+}
+
+
 # Main body
 
 my (%opts, $ssl, $user, $password, $host, $port, $channel);
@@ -371,6 +383,20 @@ $port //= $ssl ? 6697 : 6667;
 $channel =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg if defined $channel;
 $channel = "#$channel" if defined $channel && $channel !~ /^[#&]/;
 # TODO: Do something with other parameters, such as a key
+
+# If there was no username, try to find one in ~/.netrc
+if (!defined $user) {
+  my ($u, $p) = read_netrc($host);
+  ($user, $password) = ($u, $p) if defined $u;
+}
+
+# If there was a username, but no password, try to find one in ~/.netrc
+if (defined $user && !defined $password) {
+  my ($u, $p) = read_netrc($host, $user);
+  $password = $p if defined $p;
+}
+
+# If there was a username, but still no password, prompt for it.
 if (defined $user && !defined $password) {
   print "IRC password for user \"$user\": ";
   ReadMode('noecho');
