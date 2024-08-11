@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
-# This IRC 'bot looks for lines of the form "slideset: URL" and
+# This IRC 'bot looks for lines of the form "slideset: URL"
+# (or "slides: URL") and
 # "[slide N]", where N is a number. Case doesn't matter. When it sees
 # the former, it replies with that URL with a sync server appended.
 # E.g., when it sees:
@@ -233,7 +234,7 @@ sub said($$)
   my $addressed = $info->{address};	# Defined if we're personally addressed
 
   return $self->handle_slideset($info, $1)
-      if $text =~ /^ *slideset *: *(.+)$/i;
+      if $text =~ /^ *slides(?:et)? *: *(.+)$/i;
 
   return $self->request_slide_sync($info, $1)
       if $text =~ /^ *\[ *slide *(.+?) *\] *$/i;
